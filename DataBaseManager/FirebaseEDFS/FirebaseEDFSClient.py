@@ -89,6 +89,7 @@ class FirebaseEDFSClient:
 
     def put(self, filename, path, partition):
         json_data = {}
+        partition = int(partition)
         full_path = os.path.join(path, filename)
         if filename.endswith("csv"):
             json_data = self.csvExtractor.to_json(full_path)
@@ -122,5 +123,5 @@ if __name__ == '__main__':
     # fs.put("california_vaccination.csv", "/parent1/parent2", 3)
     # r = fs.getPartitionLocations("/parent1/parent2/california_vaccination.csv")
     # r = fs.readPartition("/parent1/parent2/california_vaccination.csv", 2)
-    fs.cat("/parent1/parent2/california_vaccination.csv")
+    # fs.cat("/parent1/parent2/california_vaccination.csv")
     # fs.mkdir("/some/path/to/file")
