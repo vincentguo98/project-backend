@@ -1,5 +1,6 @@
 import json
 
+
 class JsonFileSplitter:
     def __init__(self):
         pass
@@ -15,9 +16,8 @@ class JsonFileSplitter:
             result.append(unit_json)
         return result
 
+
 if __name__ == '__main__':
     splitter = JsonFileSplitter()
     data = splitter.to_list_of_json(4)
     print(data)
-
-

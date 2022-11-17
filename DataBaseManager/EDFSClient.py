@@ -34,18 +34,18 @@ class EDFSClient:
         return self.database[database_type].put(filename, path, partition)
 
     def getPartitionLocations(self, database_type, full_filename):
-        # filename: full filename in EDFS including path
+        # filename: full filename in EDFS including path e.g /user/john/xxx.csv
         # return List of partition locations
         # e.g ["https://dsci551-b6052-default-rtdb.firebaseio.com/data/file1.csv", ...]
         return self.database[database_type].getPartitionLocations(full_filename)
 
     def readPartition(self, database_type, full_filename, partition):
-        # filename: full filename in EDFS including path
+        # filename: full filename in EDFS including path e.g /user/john/xxx.csv
         # partition: partition index
         # return the content of a file partition, string
         return self.database[database_type].readPartition(full_filename, partition)
 
     def cat(self, database_type, full_filename):
-        # filename: full filename in EDFS including path
+        # filename: full filename in EDFS including path e.g /user/john/xxx.csv
         # return the content of a file , string
         return self.database[database_type].cat(full_filename)
