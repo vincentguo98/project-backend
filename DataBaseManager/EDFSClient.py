@@ -28,24 +28,24 @@ class EDFSClient:
         # path: target path in EDFS
         # partition: partition count
         abs_path = os.path.abspath("./datasets")
-        full_filename = os.path.join(abs_path, filename)
-        print(full_filename)
+        filename = os.path.join(abs_path, filename)
+        print(filename)
         # Expect return True if update success, False if fail
-        return self.database[database_type].put(full_filename, path, partition)
+        return self.database[database_type].put(filename, path, partition)
 
-    def getPartitionLocations(self, database_type, filename):
-        # filename: full filename in EDFS
+    def getPartitionLocations(self, database_type, full_filename):
+        # filename: full filename in EDFS including path
         # return List of partition locations
         # e.g ["https://dsci551-b6052-default-rtdb.firebaseio.com/data/file1.csv", ...]
-        return self.database[database_type].getPartitionLocations(filename)
+        return self.database[database_type].getPartitionLocations(full_filename)
 
-    def readPartition(self, database_type, filename, partition):
-        # filename: full filename in EDFS
+    def readPartition(self, database_type, full_filename, partition):
+        # filename: full filename in EDFS including path
         # partition: partition index
         # return the content of a file partition, string
-        return self.database[database_type].readPartition(filename, partition)
+        return self.database[database_type].readPartition(full_filename, partition)
 
-    def cat(self, database_type, filename):
-        # filename: full filename in EDFS
+    def cat(self, database_type, full_filename):
+        # filename: full filename in EDFS including path
         # return the content of a file , string
-        return self.database[database_type].cat(filename)
+        return self.database[database_type].cat(full_filename)

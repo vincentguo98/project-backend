@@ -49,15 +49,15 @@ class PathExporter:
         print(json_data)
         return json_data
 
-    def toRootPath(self, path, filename=""):
+    def toRootPath(self, path, full_filename=""):
         if path[0] == '/':
             path = path[1:len(path)]
-        return os.path.join(os.path.join(self.root, path), filename).replace('.', '-') + ".json"
+        return os.path.join(os.path.join(self.root, path), full_filename).replace('.', '-') + ".json"
 
-    def toPartitionedDataPath(self, filename, partition):
-        if filename[0] == '/':
-            filename = filename[1:len(filename)]
-        return os.path.join(os.path.join(self.data, filename.replace('.', '-').replace('/', '-')),
+    def toPartitionedDataPath(self, full_filename, partition):
+        if full_filename[0] == '/':
+            full_filename = full_filename[1:len(full_filename)]
+        return os.path.join(os.path.join(self.data, full_filename.replace('.', '-').replace('/', '-')),
                             str(partition)) + ".json"
 
 
@@ -87,32 +87,32 @@ class FirebaseEDFSClient:
         metaDataPath = self.pathExporter.toRootPath(path)
         self.client.remove(metaDataPath)
 
-    def put(self, filename, path, partition):
+    def put(self, full_filename, path, partition):
         json_data = {}
         partition = int(partition)
-        full_path = os.path.join(path, filename)
-        if filename.endswith("csv"):
+        full_path = os.path.join(path, full_filename)
+        if full_filename.endswith("csv"):
             json_data = self.csvExtractor.to_json(full_path)
-        if filename.endswith("json"):
+        if full_filename.endswith("json"):
             json_data = self.jsonExtractor.to_json(full_path)
         partitioned_data_list = self.jsonFileSplitter.to_list_of_json(partition, json_data)
-        meta_data_path = self.pathExporter.toRootPath(path, filename)
+        meta_data_path = self.pathExporter.toRootPath(path, full_filename)
         meta_data = {}
         for i in range(0, partition):
-            partitioned_path = self.pathExporter.toPartitionedDataPath(os.path.join(path, filename), i)
+            partitioned_path = self.pathExporter.toPartitionedDataPath(os.path.join(path, full_filename), i)
             self.client.patch(partitioned_path, partitioned_data_list[i])
             meta_data[i] = urllib.parse.urljoin(self.URL, partitioned_path)
         self.client.patch(meta_data_path, meta_data)
 
-    def getPartitionLocations(self, filename):
-        path = self.pathExporter.toRootPath(filename)
+    def getPartitionLocations(self, full_filename):
+        path = self.pathExporter.toRootPath(full_filename)
         return self.client.get(path)
 
-    def readPartition(self, filename, partition):
-        return self.client.get(self.pathExporter.toPartitionedDataPath(filename, partition))
+    def readPartition(self, full_filename, partition):
+        return self.client.get(self.pathExporter.toPartitionedDataPath(full_filename, partition))
 
-    def cat(self, filename):
-        for data_url in self.ls(filename):
+    def cat(self, full_filename):
+        for data_url in self.ls(full_filename):
             print(self.client.get(data_url))
 
 
