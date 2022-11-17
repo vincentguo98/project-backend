@@ -4,8 +4,6 @@ class JsonFileSplitter:
     def __init__(self):
         pass
 
-
-
     def to_list_of_json(self, partition, json_data):
         json_data_list = [item for item in json_data]
         unit_length = int(len(json_data_list) / partition)
