@@ -7,7 +7,7 @@ from .CSVExtractor import *
 from .JsonExtractor import *
 
 
-class FireBaseClient:
+class FireBaseRequester:
     def __init__(self, URL):
         self.url = URL
 
@@ -61,12 +61,12 @@ class PathExporter:
                             str(partition)) + ".json"
 
 
-class FileSystemClient:
+class FirebaseEDFSClient:
     def __init__(self):
         self.URL = Constants.URL
         self.root = Constants.ROOT
         self.data = Constants.DATA
-        self.client = FireBaseClient(self.URL)
+        self.client = FireBaseRequester(self.URL)
         self.pathExporter = PathExporter(Constants.ROOT, Constants.DATA)
         self.jsonFileSplitter = JsonFileSplitter()
         self.csvExtractor = CSVExtractor()
@@ -116,7 +116,7 @@ class FileSystemClient:
 
 
 if __name__ == '__main__':
-    fs = FileSystemClient()
+    fs = FirebaseEDFSClient()
     # fs.mkdir("/parent1/parent2")
     # fs.mkdir("/parent2")
     # fs.put("california_vaccination.csv", "/parent1/parent2", 3)

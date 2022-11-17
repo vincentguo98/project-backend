@@ -1,11 +1,11 @@
-from .FirebaseEDFS.FileSystemClient import FileSystemClient
+from .FirebaseEDFS.FirebaseEDFSClient import FirebaseEDFSClient
 import os
 
 class EDFSClient:
     def __init__(self):
         self.database = {}
         # TODO  Please register "mysql" @Yating and "mongoDB" @Wenyuan here"
-        self.register("firebase", FileSystemClient())
+        self.register("firebase", FirebaseEDFSClient())
 
     def register(self, database_type, client):
         self.database[database_type] = client
@@ -38,6 +38,6 @@ class EDFSClient:
         # return the content of a file partition, string
         return self.database[database_type].readPartition(filename, partition)
 
-    def cat(self, database_type ,filename):
+    def cat(self, database_type, filename):
         # return the content of a file , string
         return self.database[database_type].cat(filename)
