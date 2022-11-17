@@ -1,10 +1,10 @@
-import Constants
+from . import Constants
 import requests
 import os
 import urllib.parse
-from JsonFileSplitter import *
-from CSVExtractor import *
-from JsonExtractor import *
+from .JsonFileSplitter import *
+from .CSVExtractor import *
+from .JsonExtractor import *
 
 
 class FireBaseClient:
@@ -43,8 +43,10 @@ class PathExporter:
         cur = json_data
         for d in path_list:
             cur[d] = {}
+            cur['*'] = "*"
             cur = cur[d]
         cur["*"] = "*"
+        print(json_data)
         return json_data
 
     def toRootPath(self, path, filename=""):
@@ -71,7 +73,7 @@ class FileSystemClient:
         self.jsonExtractor = JsonExtractor()
 
     def mkdir(self, path):
-        self.client.patch(".json", self.pathExporter.toRootJson(path))
+        self.client.patch("/root" + path + ".json", {'*' :'*'})
 
     def ls(self, path):
         directory = self.client.get(self.pathExporter.toRootPath(path))
@@ -87,10 +89,11 @@ class FileSystemClient:
 
     def put(self, filename, path, partition):
         json_data = {}
+        full_path = os.path.join(path, filename)
         if filename.endswith("csv"):
-            json_data = self.csvExtractor.to_json(filename)
+            json_data = self.csvExtractor.to_json(full_path)
         if filename.endswith("json"):
-            json_data = self.jsonExtractor.to_json(filename)
+            json_data = self.jsonExtractor.to_json(full_path)
         partitioned_data_list = self.jsonFileSplitter.to_list_of_json(partition, json_data)
         meta_data_path = self.pathExporter.toRootPath(path, filename)
         meta_data = {}
@@ -115,8 +118,9 @@ class FileSystemClient:
 if __name__ == '__main__':
     fs = FileSystemClient()
     # fs.mkdir("/parent1/parent2")
+    # fs.mkdir("/parent2")
     # fs.put("california_vaccination.csv", "/parent1/parent2", 3)
     # r = fs.getPartitionLocations("/parent1/parent2/california_vaccination.csv")
-    r = fs.readPartition("/parent1/parent2/california_vaccination.csv", 2)
-    print(json.dumps(r, indent=2))
+    # r = fs.readPartition("/parent1/parent2/california_vaccination.csv", 2)
+    fs.cat("/parent1/parent2/california_vaccination.csv")
     # fs.mkdir("/some/path/to/file")
