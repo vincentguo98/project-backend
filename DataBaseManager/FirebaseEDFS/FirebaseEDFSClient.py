@@ -87,19 +87,19 @@ class FirebaseEDFSClient:
         metaDataPath = self.pathExporter.toRootPath(path)
         self.client.remove(metaDataPath)
 
-    def put(self, full_filename, path, partition):
+    def put(self, filename, path, partition):
         json_data = {}
         partition = int(partition)
-        full_path = os.path.join(path, full_filename)
-        if full_filename.endswith("csv"):
+        full_path = os.path.join(path, filename)
+        if filename.endswith("csv"):
             json_data = self.csvExtractor.to_json(full_path)
-        if full_filename.endswith("json"):
+        if filename.endswith("json"):
             json_data = self.jsonExtractor.to_json(full_path)
         partitioned_data_list = self.jsonFileSplitter.to_list_of_json(partition, json_data)
-        meta_data_path = self.pathExporter.toRootPath(path, full_filename)
+        meta_data_path = self.pathExporter.toRootPath(path, filename)
         meta_data = {}
         for i in range(0, partition):
-            partitioned_path = self.pathExporter.toPartitionedDataPath(os.path.join(path, full_filename), i)
+            partitioned_path = self.pathExporter.toPartitionedDataPath(os.path.join(path, filename), i)
             self.client.patch(partitioned_path, partitioned_data_list[i])
             meta_data[i] = urllib.parse.urljoin(self.URL, partitioned_path)
         self.client.patch(meta_data_path, meta_data)
