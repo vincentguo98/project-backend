@@ -1,10 +1,15 @@
-from . import Constants
 import requests
 import os
 import urllib.parse
+from . import Constants
 from .JsonFileSplitter import *
 from .CSVExtractor import *
 from .JsonExtractor import *
+
+# import Constants
+# from JsonFileSplitter import *
+# from CSVExtractor import *
+# from JsonExtractor import *
 
 
 class FireBaseRequester:
@@ -46,13 +51,12 @@ class PathExporter:
             cur['*'] = "*"
             cur = cur[d]
         cur["*"] = "*"
-        print(json_data)
         return json_data
 
-    def toRootPath(self, path, full_filename=""):
-        if path[0] == '/':
-            path = path[1:len(path)]
-        return os.path.join(os.path.join(self.root, path), full_filename).replace('.', '-') + ".json"
+    def toRootPath(self, filename_with_path):
+        if filename_with_path[0] == '/':
+            filename_with_path = filename_with_path[1:len(filename_with_path)]
+        return os.path.join(self.root, filename_with_path).replace('.', '-') + ".json"
 
     def toPartitionedDataPath(self, full_filename, partition):
         if full_filename[0] == '/':
@@ -73,7 +77,7 @@ class FirebaseEDFSClient:
         self.jsonExtractor = JsonExtractor()
 
     def mkdir(self, path):
-        self.client.patch("/root" + path + ".json", {'*' :'*'})
+        self.client.patch("/root" + path + ".json", {'*': '*'})
 
     def ls(self, path):
         directory = self.client.get(self.pathExporter.toRootPath(path))
@@ -87,19 +91,20 @@ class FirebaseEDFSClient:
         metaDataPath = self.pathExporter.toRootPath(path)
         self.client.remove(metaDataPath)
 
-    def put(self, filename, path, partition):
+    def put(self, abs_local_filename_with_path, path, partition):
+        filename = abs_local_filename_with_path.split("/")[-1]
         json_data = {}
         partition = int(partition)
-        full_path = os.path.join(path, filename)
+        filename_with_path = os.path.join(path, filename)
         if filename.endswith("csv"):
-            json_data = self.csvExtractor.to_json(full_path)
+            json_data = self.csvExtractor.to_json(abs_local_filename_with_path)
         if filename.endswith("json"):
-            json_data = self.jsonExtractor.to_json(full_path)
+            json_data = self.jsonExtractor.to_json(abs_local_filename_with_path)
         partitioned_data_list = self.jsonFileSplitter.to_list_of_json(partition, json_data)
-        meta_data_path = self.pathExporter.toRootPath(path, filename)
+        meta_data_path = self.pathExporter.toRootPath(filename_with_path)
         meta_data = {}
         for i in range(0, partition):
-            partitioned_path = self.pathExporter.toPartitionedDataPath(os.path.join(path, filename), i)
+            partitioned_path = self.pathExporter.toPartitionedDataPath(filename_with_path, i)
             self.client.patch(partitioned_path, partitioned_data_list[i])
             meta_data[i] = urllib.parse.urljoin(self.URL, partitioned_path)
         self.client.patch(meta_data_path, meta_data)
@@ -118,10 +123,13 @@ class FirebaseEDFSClient:
 
 if __name__ == '__main__':
     fs = FirebaseEDFSClient()
-    # fs.mkdir("/parent1/parent2")
-    # fs.mkdir("/parent2")
-    # fs.put("california_vaccination.csv", "/parent1/parent2", 3)
-    # r = fs.getPartitionLocations("/parent1/parent2/california_vaccination.csv")
-    # r = fs.readPartition("/parent1/parent2/california_vaccination.csv", 2)
+    fs.mkdir("/parent1/parent2")
+    fs.mkdir("/parent2")
+    print(fs.ls("/parent1"))
+    fs.put("/Users/guowenzheng/USC/3rdSemester/DSCI551/project-backend/datasets/california_vaccination.csv",
+           "/parent1/parent2", 3)
+    print(fs.getPartitionLocations("/parent1/parent2/california_vaccination.csv"))
+    print(fs.readPartition("/parent1/parent2/california_vaccination.csv", 2))
+    fs.rm("/parent1/parent2/california_vaccination.csv")
     # fs.cat("/parent1/parent2/california_vaccination.csv")
     # fs.mkdir("/some/path/to/file")

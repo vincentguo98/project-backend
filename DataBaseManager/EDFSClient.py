@@ -1,5 +1,5 @@
 from .FirebaseEDFS.FirebaseEDFSClient import FirebaseEDFSClient
-from .mysqlEDFS import mysqlEDFSClient
+from .mysqlEDFS.mysqlEDFSClient import mysqlEDFSClient
 import os
 
 class EDFSClient:
@@ -7,7 +7,7 @@ class EDFSClient:
         self.database = {}
         # TODO  Please register "mysql" @Yating and "mongoDB" @Wenyuan here"
         self.register("firebase", FirebaseEDFSClient())
-        self.register("sql", mysqlEDFSClient())
+        # self.register("sql", mysqlEDFSClient())
 
     def register(self, database_type, client):
         self.database[database_type] = client
