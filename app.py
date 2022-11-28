@@ -7,12 +7,6 @@ app = Flask(__name__)
 CORS(app)
 edfs_client = EDFSClient()
 
-
-@app.route('/')
-def hello_world():
-    return 'Hello World!'
-
-
 @app.route('/api/ls', methods=['GET'])
 def ls():
     database = request.args.get('database')
@@ -36,18 +30,6 @@ def mkdir():
     path = request.args.get('path')
     success = edfs_client.mkdir(database, path)
     return jsonify({"success": success})
-
-
-def outputContent(database, path, data):
-    if database == "mysql":
-        print(data)
-        return jsonify(transform_mysql(path.split("/")[-1], data))
-    if database == "firebase":
-        tes = transform_firebase(path.split("/")[-1], data)
-        print(tes)
-        return jsonify(tes)
-    return jsonify({"data": data})
-
 
 @app.route('/api/cat', methods=['GET'])
 def cat():
@@ -163,8 +145,15 @@ def testMysql():
     # print(edfs_client.ls("mysql", "/a"))
     return jsonify({"ok": 200})
 
-
-
+def outputContent(database, path, data):
+    if database == "mysql":
+        print(data)
+        return jsonify(transform_mysql(path.split("/")[-1], data))
+    if database == "firebase":
+        tes = transform_firebase(path.split("/")[-1], data)
+        print(tes)
+        return jsonify(tes)
+    return jsonify({"data": data})
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
