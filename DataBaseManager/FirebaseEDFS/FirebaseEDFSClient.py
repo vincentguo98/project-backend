@@ -57,7 +57,7 @@ class PathExporter:
     def toRootPath(self, filename_with_path):
         if filename_with_path[0] == '/':
             filename_with_path = filename_with_path[1:len(filename_with_path)]
-        return os.path.join(self.root, filename_with_path).replace('.', '-') + ".json"
+        return os.path.join(self.root, filename_with_path, ).replace('.', '-') + ".json"
 
     def toPartitionedDataPath(self, full_filename, partition):
         if full_filename[0] == '/':
@@ -78,7 +78,11 @@ class FirebaseEDFSClient:
         self.jsonExtractor = JsonExtractor()
 
     def mkdir(self, path):
-        self.client.patch("/root" + path + ".json", {'*': '*'})
+        try:
+            self.client.patch("/root" + path + ".json", {'*': '*'})
+            return True
+        except Exception:
+            return False
 
     def ls(self, path):
         directory = self.client.get(self.pathExporter.toRootPath(path))
@@ -88,10 +92,14 @@ class FirebaseEDFSClient:
         return directory
 
     def rm(self, path):
-        dataPath = self.pathExporter.toPartitionedDataPath(path, "")
-        self.client.remove(dataPath)
-        metaDataPath = self.pathExporter.toRootPath(path)
-        self.client.remove(metaDataPath)
+        try:
+            dataPath = self.pathExporter.toPartitionedDataPath(path, "")
+            self.client.remove(dataPath)
+            metaDataPath = self.pathExporter.toRootPath(path)
+            self.client.remove(metaDataPath)
+            return True
+        except Exception:
+            return False
 
     def put(self, abs_local_filename_with_path, path, partition):
         filename = abs_local_filename_with_path.split("/")[-1]
@@ -151,18 +159,11 @@ class FirebaseEDFSClient:
                 if lte >= row[whereField] >= gte:
                     output.append(row[selectField])
             res["partition"].append({
-                "input": partition[0: min(10, len(partition))],
+                "input": partition,
                 "output": output
             })
             res["res"].extend(output)
         return res
-
-    # def get_distinct_values(self, data, fieldsName):
-    #     fields = set()
-    #     for partition in data:
-    #         for row in partition:
-    #             fields.add(row[fieldsName])
-    #     return list(fields)
 
     def count(self, full_filename, whereField, lte, gte, groupByField):
         data = self.getPartitionList(full_filename)
@@ -175,14 +176,12 @@ class FirebaseEDFSClient:
                     counter[row[groupByField]] = counter.get(row[groupByField], 0) + 1
                     res_counter[row[groupByField]] = res_counter.get(row[groupByField], 0) + 1
             res["partition"].append({
-                "input": partition[0: min(10, len(partition))],
+                "input": partition,
                 "output": [":".join([str(key), str(value)]) for key, value in counter.items()]
             })
         res["res"] = [":".join([str(key), str(value)]) for key, value in res_counter.items()]
         return res
 
-    def avg(self, selectField, lte, gte, whereField, groupByField):
-        pass
 
 
 if __name__ == '__main__':

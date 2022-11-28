@@ -1,4 +1,3 @@
-import util
 from .FirebaseEDFS.FirebaseEDFSClient import FirebaseEDFSClient
 from .mysqlEDFS.mysqlEDFSClient import mysqlEDFSClient
 import os
@@ -58,4 +57,4 @@ class EDFSClient:
         return self.database[database_type].search(full_filename, selectField, whereField,lte, gte)
 
     def count(self, database_type, full_filename, whereField, lte, gte, groupByField):
-        return self.database[database_type].count(full_filename, whereField,lte, gte, groupByField)
+        return self.database[database_type].count(full_filename, whereField, lte, gte, groupByField)

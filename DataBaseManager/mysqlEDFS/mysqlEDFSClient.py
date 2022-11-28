@@ -190,7 +190,7 @@ class mysqlEDFSClient:
             dir_list.remove('')
         table_name = self.concatTableName(dir_list) + '_' + str(partition)
         df = pd.read_sql(f'select * from {table_name}', self.write_conn)
-        return df.to_json(orient='records', indent=4)
+        return df.to_dict(orient='records')
 
     def cat(self, path):
         location = self.getPartitionLocations(path)

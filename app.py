@@ -25,7 +25,7 @@ def ls():
     if files is None:
         files = []
     else:
-        files = [{"id": name, "name": name, "isDir": True if name.find(".") else False}
+        files = [{"id": name, "name": name, "isDir": True if name.find(".") < 0 else False}
                  for name in files]
     return jsonify(files)
 
@@ -115,12 +115,14 @@ def search():
 @app.route('/api/analytic')
 def analytic():
     database = request.args.get("database")
-    full_filename = request.args.get("path")
+    path = request.args.get("path")
     lte = request.args.get("lte")
     gte = request.args.get("gte")
     whereField = request.args.get("whereField")
     groupByField = request.args.get("groupByField")
-    return edfs_client.count(database, full_filename, whereField, int(lte), int(gte), groupByField)
+    count_results = edfs_client.count(database, path, whereField, int(lte), int(gte), groupByField)
+    count_results["columns"] = getColumnsByFilename(path.split("/")[-1])
+    return count_results
 
 
 
