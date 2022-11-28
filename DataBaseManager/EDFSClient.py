@@ -1,3 +1,4 @@
+import util
 from .FirebaseEDFS.FirebaseEDFSClient import FirebaseEDFSClient
 from .mysqlEDFS.mysqlEDFSClient import mysqlEDFSClient
 import os
@@ -7,7 +8,7 @@ class EDFSClient:
         self.database = {}
         # TODO  Please register "mysql" @Yating and "mongoDB" @Wenyuan here"
         self.register("firebase", FirebaseEDFSClient())
-        # self.register("sql", mysqlEDFSClient())
+        self.register("mysql", mysqlEDFSClient())
 
     def register(self, database_type, client):
         self.database[database_type] = client
@@ -51,3 +52,10 @@ class EDFSClient:
         # filename: full filename in EDFS including path e.g /user/john/xxx.csv
         # return the content of a file , string
         return self.database[database_type].cat(full_filename)
+
+    def search(self, database_type,full_filename,
+               selectField, whereField,lte, gte):
+        return self.database[database_type].search(full_filename, selectField, whereField,lte, gte)
+
+    def count(self, database_type, full_filename, whereField, lte, gte, groupByField):
+        return self.database[database_type].count(full_filename, whereField,lte, gte, groupByField)

@@ -1,22 +1,24 @@
 import sqlalchemy
 import pymysql
+
 pymysql.install_as_MySQLdb()
 from pathlib import PurePosixPath
 import pandas as pd
 import numpy as np
-import urllib.parse
+
 
 class mysqlEDFSClient:
     def __init__(self):
         try:
+
             self.conn = pymysql.connect(host="localhost",
-                                   port=3306,
-                                   user="root",
-                                   password="1djdgQL@",
-                                   database="project")
+                                        port=3306,
+                                        user="root",
+                                        database="project")
             self.cursor = self.conn.cursor()
 
-            password = urllib.parse.quote_plus("1djdgQL@")  # '123%40456'
+            # password = urllib.parse.quote_plus("1djdgQL@")  # '123%40456'
+            password = ""
             self.write_conn = sqlalchemy.create_engine(f"mysql+mysqldb://root:{password}@localhost/project")
         except Exception as e:
             print('cant connect to mysql database')
@@ -54,7 +56,6 @@ class mysqlEDFSClient:
                 file_id = row[0]
         return file_id
 
-
     def mkdir(self, path):
         dir_list = path.split('/')
         if dir_list == ['', '']:
@@ -70,7 +71,6 @@ class mysqlEDFSClient:
             print(e)
             return False
 
-
     def ls(self, path):
         dir_list = path.split('/')
         if dir_list == ['', '']:
@@ -82,10 +82,6 @@ class mysqlEDFSClient:
         self.cursor.execute(sql, [parent])
         result = self.cursor.fetchall()
         return [row[1] for row in result]
-
-
-
-
 
     def rm(self, path):
         dir_list = path.split('/')
@@ -111,8 +107,9 @@ class mysqlEDFSClient:
             print(e)
             return False
 
-
     def put(self, filename, path, partition):
+        full_filename = filename
+        filename = filename.split("/")[-1]
         # check if the path is valid
         dir_list = path.split('/')
         if dir_list == ['', '']:
@@ -128,9 +125,9 @@ class mysqlEDFSClient:
 
         # read file
         if PurePosixPath(filename).suffix == '.csv':
-            df = pd.read_csv('../../datasets/' + filename)
+            df = pd.read_csv(full_filename, keep_default_na=False)
         elif PurePosixPath(filename).suffix == '.json':
-            df = pd.read_json('../../datasets/' + filename)
+            df = pd.read_json(full_filename)
         else:
             return False
         df.insert(loc=0, column='row_num', value=np.arange(len(df)))
@@ -142,8 +139,9 @@ class mysqlEDFSClient:
         try:
             # write data
             for i in range(partition):
-                df[df['row_num'] % partition == i].to_sql(table_name + '_' + str(i), self.write_conn, if_exists='replace',
-                                                  index=False)
+                df[df['row_num'] % partition == i].to_sql(table_name + '_' + str(i), self.write_conn,
+                                                          if_exists='replace',
+                                                          index=False)
 
             partition_info = pd.DataFrame([table_name + '_' + str(i) for i in range(partition)], columns=['location'])
             partition_info.to_sql(table_name, self.write_conn, if_exists='replace', index=False)
@@ -199,9 +197,11 @@ class mysqlEDFSClient:
         df = pd.concat([pd.read_sql(f'select * from {table_name}', self.write_conn) for table_name in location], axis=0,
                        ignore_index=True)
         df.sort_values(by='row_num', inplace=True, ignore_index=True)
-        return df.to_json(orient='records', indent=4)
+        return df.to_dict(orient='records')
+
 
 if __name__ == '__main__':
+
     try:
         sc = mysqlEDFSClient()
         sc.mkdir("/test1")
@@ -216,5 +216,5 @@ if __name__ == '__main__':
         sc.rm("/test3/LA_County_COVID_Testing.csv")
         print(sc.ls('/test3'))
     except Exception as e:
-        sc.close_conn()
-
+        print("something wrong")
+        # sc.close_conn()

@@ -6,6 +6,7 @@ from .JsonFileSplitter import *
 from .CSVExtractor import *
 from .JsonExtractor import *
 
+
 # import Constants
 # from JsonFileSplitter import *
 # from CSVExtractor import *
@@ -82,7 +83,8 @@ class FirebaseEDFSClient:
     def ls(self, path):
         directory = self.client.get(self.pathExporter.toRootPath(path))
         if isinstance(directory, dict):
-            return [x for x in directory.keys() if x[0] != '*']
+            filtered = [x.replace("-", ".") for x in directory.keys() if x[0] != '*']
+            return filtered
         return directory
 
     def rm(self, path):
@@ -103,6 +105,7 @@ class FirebaseEDFSClient:
         partitioned_data_list = self.jsonFileSplitter.to_list_of_json(partition, json_data)
         meta_data_path = self.pathExporter.toRootPath(filename_with_path)
         meta_data = {}
+        print(partitioned_data_list)
         for i in range(0, partition):
             partitioned_path = self.pathExporter.toPartitionedDataPath(filename_with_path, i)
             self.client.patch(partitioned_path, partitioned_data_list[i])
@@ -117,8 +120,69 @@ class FirebaseEDFSClient:
         return self.client.get(self.pathExporter.toPartitionedDataPath(full_filename, partition))
 
     def cat(self, full_filename):
+        data = []
         for data_url in self.ls(full_filename):
-            print(self.client.get(data_url))
+            items = self.client.get(data_url)
+            if isinstance(items, dict):
+                data.extend(list(items.values()))
+            else:
+                data.extend(list(filter(None, items)))
+            print(items)
+        return data
+
+    def getPartitionList(self, full_filename):
+        data = []
+        for data_url in self.ls(full_filename):
+            items = self.client.get(data_url)
+            if isinstance(items, dict):
+                data.append(list(items.values()))
+            else:
+                data.append(list(filter(None, items)))
+        return data
+
+    def search(self, full_filename, selectField, whereField, lte, gte):
+        data = self.getPartitionList(full_filename)
+
+        res = {"partition": [], "res": []}
+
+        for partition in data:
+            output = []
+            for row in partition:
+                if lte >= row[whereField] >= gte:
+                    output.append(row[selectField])
+            res["partition"].append({
+                "input": partition[0: min(10, len(partition))],
+                "output": output
+            })
+            res["res"].extend(output)
+        return res
+
+    # def get_distinct_values(self, data, fieldsName):
+    #     fields = set()
+    #     for partition in data:
+    #         for row in partition:
+    #             fields.add(row[fieldsName])
+    #     return list(fields)
+
+    def count(self, full_filename, whereField, lte, gte, groupByField):
+        data = self.getPartitionList(full_filename)
+        res_counter = {}
+        res = {"partition": [], "res": []}
+        for partition in data:
+            counter = {}
+            for row in partition:
+                if lte >= row[whereField] >= gte:
+                    counter[row[groupByField]] = counter.get(row[groupByField], 0) + 1
+                    res_counter[row[groupByField]] = res_counter.get(row[groupByField], 0) + 1
+            res["partition"].append({
+                "input": partition[0: min(10, len(partition))],
+                "output": [":".join([str(key), str(value)]) for key, value in counter.items()]
+            })
+        res["res"] = [":".join([str(key), str(value)]) for key, value in res_counter.items()]
+        return res
+
+    def avg(self, selectField, lte, gte, whereField, groupByField):
+        pass
 
 
 if __name__ == '__main__':
@@ -131,5 +195,3 @@ if __name__ == '__main__':
     print(fs.getPartitionLocations("/parent1/parent2/california_vaccination.csv"))
     print(fs.readPartition("/parent1/parent2/california_vaccination.csv", 2))
     fs.rm("/parent1/parent2/california_vaccination.csv")
-    # fs.cat("/parent1/parent2/california_vaccination.csv")
-    # fs.mkdir("/some/path/to/file")
