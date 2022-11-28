@@ -118,7 +118,12 @@ class FirebaseEDFSClient:
             partitioned_path = self.pathExporter.toPartitionedDataPath(filename_with_path, i)
             self.client.patch(partitioned_path, partitioned_data_list[i])
             meta_data[i] = urllib.parse.urljoin(self.URL, partitioned_path)
-        self.client.patch(meta_data_path, meta_data)
+        try:
+            self.client.patch(meta_data_path, meta_data)
+            return True
+        except Exception as e:
+            return False
+
 
     def getPartitionLocations(self, full_filename):
         path = self.pathExporter.toRootPath(full_filename)
